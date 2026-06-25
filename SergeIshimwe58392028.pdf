@@ -1,0 +1,299 @@
+Name: Serge Ishimwe 
+ID: 58392028
+Cohort: A
+
+MariaDB [(none)]> show databases;
++----------------------+
+| Database             |
++----------------------+
+| contactsdb           |
+| elitevideo           |
+| hotel_managementdb10 |
+| information_schema   |
+| mydb                 |
+| mysql                |
+| performance_schema   |
+| prestigecars         |
+| sys                  |
+| test                 |
++----------------------+
+10 rows in set (0.002 sec)
+
+MariaDB [(none)]> create database company_db;
+Query OK, 1 row affected (0.004 sec)
+
+MariaDB [(none)]> show databases;
++----------------------+
+| Database             |
++----------------------+
+| company_db           |
+| contactsdb           |
+| elitevideo           |
+| hotel_managementdb10 |
+| information_schema   |
+| mydb                 |
+| mysql                |
+| performance_schema   |
+| prestigecars         |
+| sys                  |
+| test                 |
++----------------------+
+11 rows in set (0.002 sec)
+
+MariaDB [(none)]> use company_db;
+
+MariaDB [company_db]> create table Department(
+    -> deptNo int primary key not null,
+    -> deptName varchar(60),
+    -> mgrEmpNo int
+    -> );
+Query OK, 0 rows affected (0.051 sec)
+
+MariaDB [company_db]> desc Department;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| deptNo   | int(11)     | NO   | PRI | NULL    |       |
+| deptName | varchar(60) | YES  |     | NULL    |       |
+| mgrEmpNo | int(11)     | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+3 rows in set (0.100 sec)
+
+MariaDB [company_db]> create table Employee(
+    -> empNo int primary key not null,
+    -> fName varchar(50),
+    -> lName varchar(50),
+    -> address varchar(50),
+    -> DOB date,
+    -> sex char(1) check (sex in ('M','F')),
+    -> position varchar(50) check (position in ('Manager', 'Team Leader', 'Analyst', 'Software Developer')),
+    -> deptNo int,
+    -> foreign key(deptNo) references Department(deptNo)
+    -> );
+Query OK, 0 rows affected (0.024 sec)
+
+MariaDB [company_db]> desc Employee;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| empNo    | int(11)     | NO   | PRI | NULL    |       |
+| fName    | varchar(50) | YES  |     | NULL    |       |
+| lName    | varchar(50) | YES  |     | NULL    |       |
+| address  | varchar(50) | YES  |     | NULL    |       |
+| DOB      | date        | YES  |     | NULL    |       |
+| sex      | char(1)     | YES  |     | NULL    |       |
+| position | varchar(50) | YES  |     | NULL    |       |
+| deptNo   | int(11)     | YES  | MUL | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+8 rows in set (0.055 sec)
+
+MariaDB [company_db]> alter table department add constraint for_key_manager foreign key (mgrEmpNo) references Employee (empNo);
+Query OK, 0 rows affected (0.034 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+MariaDB [company_db]> create table Project(
+    -> projNo int primary key not null,
+    -> projName varchar(50) not null,
+    -> deptNo int not null,
+    -> foreign key(deptNo) references Department(deptNo)
+    -> );
+Query OK, 0 rows affected (0.036 sec)
+
+MariaDB [company_db]> create table WorksOn(
+    -> empNo int not null,
+    -> projNo int not null,
+    -> dateWorked date not null,
+    -> hoursWorked int check (hoursWorked between 0 and 40),
+    -> primary key (empNo, projNo, dateWorked),
+    -> foreign key (empNo) references Employee(empNo),
+    -> foreign key (projNo) references Project(projNo)
+    -> );
+Query OK, 0 rows affected (0.049 sec)
+
+MariaDB [company_db]> desc Project;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| projNo   | int(11)     | NO   | PRI | NULL    |       |
+| projName | varchar(50) | NO   |     | NULL    |       |
+| deptNo   | int(11)     | NO   | MUL | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+3 rows in set (0.035 sec)
+
+MariaDB [company_db]> desc WorksOn;
++-------------+---------+------+-----+---------+-------+
+| Field       | Type    | Null | Key | Default | Extra |
++-------------+---------+------+-----+---------+-------+
+| empNo       | int(11) | NO   | PRI | NULL    |       |
+| projNo      | int(11) | NO   | PRI | NULL    |       |
+| dateWorked  | date    | NO   | PRI | NULL    |       |
+| hoursWorked | int(11) | YES  |     | NULL    |       |
++-------------+---------+------+-----+---------+-------+
+4 rows in set (0.055 sec)
+
+Question 7.25: 
+MariaDB [company_db]> CREATE VIEW female_managed_projects AS
+    -> SELECT p.projNo, p.projName, p.deptNo
+    -> FROM project p
+    -> JOIN department d ON p.deptNo = d.deptNo
+    -> JOIN employee e ON d.mgrEmpNo = e.empNo
+    -> WHERE e.sex = 'F'
+    -> ORDER BY p.projNo;
+Query OK, 0 rows affected (0.018 sec)
+
+Question 7.26:
+
+MariaDB [company_db]> CREATE VIEW emp_hours_of_project AS
+    -> SELECT e.empNo, e.fName, e.lName, p.projName, w.hoursWorked
+    -> FROM employee e
+    -> JOIN workson w ON e.empNo = w.empNo
+    -> JOIN project p ON w.projNo = p.projNo;
+Query OK, 0 rows affected (0.033 sec)
+
+
+MariaDB [company_db]> insert into employee (empNo, fName, lName, address, DOB, sex, position) values
+    -> (1, 'John', 'Mensah', '12 Accra Road', '1985-03-15', 'M', 'Manager'),
+    -> (2, 'Ama', 'Darko', '45 Kumasi Street', '1990-07-22', 'F', 'Team Leader'),
+    -> (3, 'Kwame', 'Asante', '78 Tamale Avenue', '1988-11-10', 'M', 'Analyst'),
+    -> (4, 'Abena', 'Osei', '23 Takoradi Lane', '1992-05-18', 'F', 'Software Developer'),
+    -> (5, 'Kofi', 'Boateng', '56 Cape Coast Road', '1987-09-30', 'M', 'Analyst');
+Query OK, 5 rows affected (0.057 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [company_db]> insert into department (deptNo, deptName, mgrEmpNo) values
+    -> (101, 'Engineering', 1),
+    -> (102, 'Development', 2),
+    -> (103, 'Analysis', 3),
+    -> (104, 'Design', 4),
+    -> (105, 'Research', 5);
+Query OK, 5 rows affected (0.003 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [company_db]> update employee set deptNo = 101 where empNo = 1;
+Query OK, 1 row affected (0.008 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [company_db]> update employee set deptNo = 102 where empNo = 2;
+Query OK, 1 row affected (0.002 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [company_db]> update employee set deptNo = 103 where empNo = 3;
+Query OK, 1 row affected (0.001 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [company_db]> update employee set deptNo = 104 where empNo = 4;
+Query OK, 1 row affected (0.002 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [company_db]> update employee set deptNo = 105 where empNo = 5;
+Query OK, 1 row affected (0.002 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [company_db]> insert into project (projNo, projName, deptNo) values
+    -> (201, 'Smart City System', 101),
+    -> (202, 'Mobile Banking App', 102),
+    -> (203, 'Data Analytics Platform', 103),
+    -> (204, 'UI Design Framework', 104),
+    -> (205, 'AI Research Initiative', 105);
+Query OK, 5 rows affected (0.003 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [company_db]> insert into workson (empNo, projNo, dateWorked, hoursWorked) values
+    -> (1, 201, '2026-01-10', 8),
+    -> (2, 202, '2026-01-11', 6),
+    -> (3, 203, '2026-01-12', 7),
+    -> (4, 204, '2026-01-13', 5),
+    -> (5, 205, '2026-01-14', 40);
+Query OK, 5 rows affected (0.002 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+      Checking whether the created views works 
+
+MariaDB [company_db]> select * from female_managed_projects;
++--------+---------------------+--------+
+| projNo | projName            | deptNo |
++--------+---------------------+--------+
+|    202 | Mobile Banking App  |    102 |
+|    204 | UI Design Framework |    104 |
++--------+---------------------+--------+
+2 rows in set (0.042 sec)
+
+MariaDB [company_db]> select * from emp_hours_of_project;
++-------+-------+---------+-------------------------+-------------+
+| empNo | fName | lName   | projName                | hoursWorked |
++-------+-------+---------+-------------------------+-------------+
+|     1 | John  | Mensah  | Smart City System       |           8 |
+|     2 | Ama   | Darko   | Mobile Banking App      |           6 |
+|     3 | Kwame | Asante  | Data Analytics Platform |           7 |
+|     4 | Abena | Osei    | UI Design Framework     |           5 |
+|     5 | Kofi  | Boateng | AI Research Initiative  |          40 |
++-------+-------+---------+-------------------------+-------------+
+5 rows in set (0.005 sec)
+
+Question 7.27:
+
+MariaDB [company_db]> CREATE VIEW EmpProject(empNo, projNo, totalHours)
+    -> AS SELECT w.empNo, w.projNo, SUM(hoursWorked)
+    -> FROM employee e, project p, workson w
+    -> WHERE e.empNo = w.empNo AND p.projNo = w.projNo
+    -> GROUP BY w.empNo, w.projNo;
+Query OK, 0 rows affected (0.011 sec)
+
+MariaDB [company_db]> SELECT * FROM EmpProject;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+|     1 |    201 |          8 |
+|     2 |    202 |          6 |
+|     3 |    203 |          7 |
+|     4 |    204 |          5 |
+|     5 |    205 |         40 |
++-------+--------+------------+
+5 rows in set (0.006 sec)
+
+MariaDB [company_db]> SELECT projNo FROM EmpProject WHERE projNo = 'SCCS';
+Empty set, 1 warning (0.029 sec)
+
+MariaDB [company_db]> SELECT COUNT(projNo) FROM EmpProject WHERE empNo = 'E1';
++---------------+
+| COUNT(projNo) |
++---------------+
+|             0 |
++---------------+
+1 row in set (0.027 sec)
+
+MariaDB [company_db]> SELECT empNo, totalHours FROM EmpProject GROUP BY empNo;
++-------+------------+
+| empNo | totalHours |
++-------+------------+
+|     1 |          8 |
+|     2 |          6 |
+|     3 |          7 |
+|     4 |          5 |
+|     5 |         40 |
++-------+------------+
+5 rows in set (0.027 sec)
+
+Question 7.28:
+
+As per the meaning of the materialized view, it physically stores the values like a real table, which is different from a regular view, which stores only the query definition and runs it fresh every time.   
+
+How to maintain it as a materialized view?
+
+When data in the part table changes, the materialized view needs to be updated. There are two ways to maintain it: Immediate maintenance or Deferred maintenance.
+
+->Immediate maintenance: In this case, the materialized view is updated immediately whenever an INSERT, UPDATE, or DELETE happens on the Part table. It is always up to date, but it can slow down transactions.
+
+->Deferred maintenance: In this case, the materialized view is updated later, either at a scheduled time or when someone queries it. Here, the transactions are faster, but the view may show stale data temporarily. 
+
+When can we maintain the view without accessing the base table?
+
+We can maintain the ExpensiveParts view without accessing the part table in these circumstances: On INSERT, On DELETE, or On UPDATE.
+
+1. On INSERT: If a new part is inserted with partCost > 1000, we simply add that partNo to the materialized view, and there is no need to scan the whole Part Table.
+
+2. On DELETE: If a part is deleted, we check if that partNo still exists in Part with cost > 1000. If no other contract has that partNo with cost > 1000, we remove it from the view, but this requires checking the base table, which is a downside of this approach.
+
+3. On UPDATE: If partCost is updated to above 1000, we add partNo to the view. If partCost is updated to below 1000, we need to check if another contract still has that partNo above 1000, and this requires base table access, which is a downside as well.
+
+As a conclusion, We can maintain the view without accessing the base table only when a new part is inserted with a cost > 1000 or when a part cost is updated to above 1000. In all other cases, we need to access the base table to verify whether the partNo should remain in the view
